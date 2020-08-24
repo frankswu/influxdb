@@ -141,25 +141,33 @@ func (s *BucketSvc) FindBuckets(ctx context.Context, filter influxdb.BucketFilte
 	needsLegacyTasks := false
 	needsLegacyMonitoring := false
 	///////// WIP: ALIRIE //////////
-	err = s.store.View(ctx, func(tx kv.Tx) error {
-		// Do a lookup for bucketsindexv1/<orgID>/_tasks if not present set needsLegacyTasks := true.
-		_, e := s.store.GetBucketByName(ctx, tx, *filter.OrganizationID, influxdb.TasksSystemBucketName)
-		if kv.IsNotFound(e) {
-			needsLegacyTasks = true
-		} else if e != nil {
-			return e
-		}
+	if filter.OrganizationID != nil {
 
-		// Do a lookup for bucketsindexv1/<orgID>/_monitoring if not present set needsLegacyMonitoring := true.
-		_, e = s.store.GetBucketByName(ctx, tx, *filter.OrganizationID, influxdb.MonitoringSystemBucketName)
-		if kv.IsNotFound(e) {
-			needsLegacyMonitoring = true
-		} else if e != nil {
-			return e
-		}
+		err = s.store.View(ctx, func(tx kv.Tx) error {
+			// Do a lookup for bucketsindexv1/<orgID>/_tasks if not present set needsLegacyTasks := true.
+			_, e := s.store.GetBucketByName(ctx, tx, *filter.OrganizationID, influxdb.TasksSystemBucketName)
+			if kv.IsNotFound(e) {
+				needsLegacyTasks = true
+			} else if e != nil {
+				return e
+			}
 
-		return nil
-	})
+			// Do a lookup for bucketsindexv1/<orgID>/_monitoring if not present set needsLegacyMonitoring := true.
+			_, e = s.store.GetBucketByName(ctx, tx, *filter.OrganizationID, influxdb.MonitoringSystemBucketName)
+			if kv.IsNotFound(e) {
+				needsLegacyMonitoring = true
+			} else if e != nil {
+				return e
+			}
+
+			return nil
+		})
+	}
+
+	// ???
+	if err != nil {
+		return buckets, len(buckets), err
+	}
 
 	// NOTE: this is a remnant of the old system.
 	// There are org that do not have system buckets stored, but still need to be displayed.

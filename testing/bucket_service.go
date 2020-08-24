@@ -873,6 +873,56 @@ func FindBuckets(
 			},
 			wants: wants{},
 		},
+		{
+			name: "find legacy task and monitoring buckets when they exist",
+			fields: BucketFields{
+				OrgIDs:    mock.NewIncrementingIDGenerator(idOne),
+				BucketIDs: mock.NewIncrementingIDGenerator(idOne),
+				Organizations: []*influxdb.Organization{
+					{
+						// ID(1)
+						Name: "theorg",
+					},
+				},
+				Buckets: []*influxdb.Bucket{
+					{
+						// ID(1)
+						OrgID: idOne,
+						ID:    idTwo,
+						Name:  "abc",
+					},
+					{
+						OrgID: idOne,
+						Name:  influxdb.TasksSystemBucketName,
+						ID:    influxdb.TasksSystemBucketID,
+					},
+					{
+						OrgID: idOne,
+						Name:  influxdb.MonitoringSystemBucketName,
+						ID:    influxdb.MonitoringSystemBucketID,
+					},
+				},
+			},
+			wants: wants{
+				buckets: []*influxdb.Bucket{
+					{
+						ID:    idTwo,
+						OrgID: idOne,
+						Name:  "abc",
+					},
+					{
+						OrgID: idOne,
+						Name:  influxdb.TasksSystemBucketName,
+						ID:    influxdb.TasksSystemBucketID,
+					},
+					{
+						OrgID: idOne,
+						Name:  influxdb.MonitoringSystemBucketName,
+						ID:    influxdb.MonitoringSystemBucketID,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
